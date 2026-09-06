@@ -640,8 +640,9 @@
   function uid() { return Math.random().toString(36).slice(2, 9); }
 
   // ---------- Stamp sound ----------
-  // Synthesized so no audio file needs hosting: a short high "tap" transient
-  // layered with a lower pitch-dropping "pon" body, like a hanko stamp hitting paper.
+  // Synthesized so no audio file needs hosting: a low thudding body plus a short
+  // burst of filtered noise for the "paper contact" texture, like a hanko stamp
+  // hitting an ink pad — deliberately dull/percussive rather than a clean tone.
   var audioCtx = null;
   function playStampSound() {
     try {
@@ -650,27 +651,32 @@
       var ctx = audioCtx;
       var now = ctx.currentTime;
 
-      var click = ctx.createOscillator();
-      var clickGain = ctx.createGain();
-      click.type = "triangle";
-      click.frequency.setValueAtTime(1200, now);
-      clickGain.gain.setValueAtTime(0.22, now);
-      clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.02);
-      click.connect(clickGain).connect(ctx.destination);
-      click.start(now);
-      click.stop(now + 0.03);
-
       var body = ctx.createOscillator();
       var bodyGain = ctx.createGain();
       body.type = "sine";
-      body.frequency.setValueAtTime(760, now);
-      body.frequency.exponentialRampToValueAtTime(300, now + 0.12);
+      body.frequency.setValueAtTime(170, now);
+      body.frequency.exponentialRampToValueAtTime(65, now + 0.16);
       bodyGain.gain.setValueAtTime(0.0001, now);
-      bodyGain.gain.exponentialRampToValueAtTime(0.3, now + 0.01);
-      bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+      bodyGain.gain.exponentialRampToValueAtTime(0.5, now + 0.008);
+      bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
       body.connect(bodyGain).connect(ctx.destination);
       body.start(now);
-      body.stop(now + 0.22);
+      body.stop(now + 0.3);
+
+      var noiseLen = Math.floor(ctx.sampleRate * 0.05);
+      var noiseBuffer = ctx.createBuffer(1, noiseLen, ctx.sampleRate);
+      var data = noiseBuffer.getChannelData(0);
+      for (var i = 0; i < noiseLen; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / noiseLen, 2);
+      var noise = ctx.createBufferSource();
+      noise.buffer = noiseBuffer;
+      var noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = "lowpass";
+      noiseFilter.frequency.setValueAtTime(450, now);
+      var noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.3, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+      noise.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
+      noise.start(now);
     } catch (e) {}
   }
 

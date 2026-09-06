@@ -1,0 +1,1271 @@
+<title>習慣スタンプ帳</title>
+<meta name="description" content="毎日のルーティンを消し込み、達成率と積み重ねを記録するチェックリスト帳" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="習慣スタンプ帳" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --bg: #E9E9E2;
+    --bg-grain: #DEDED4;
+    --surface: #F8F8F4;
+    --surface-raised: #FFFFFF;
+    --ink: #262620;
+    --ink-soft: #726F63;
+    --ink-faint: #A9A69A;
+    --line: #D9D7CA;
+    --line-strong: #C7C4B4;
+    --accent: #C1442A;
+    --accent-ink: #FFFDFA;
+    --accent-wash-1: #EFD9CE;
+    --accent-wash-2: #F2E4DB;
+    --accent-wash-3: #F6EEE8;
+    --shadow: 0 1px 2px rgba(38,38,32,0.06), 0 8px 24px -12px rgba(38,38,32,0.18);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #171713;
+      --bg-grain: #1E1E19;
+      --surface: #211F1A;
+      --surface-raised: #29271F;
+      --ink: #EFEBE0;
+      --ink-soft: #A6A192;
+      --ink-faint: #6B6858;
+      --line: #383527;
+      --line-strong: #4A4633;
+      --accent: #E2643F;
+      --accent-ink: #1A1108;
+      --accent-wash-1: #4A2C1E;
+      --accent-wash-2: #3A2519;
+      --accent-wash-3: #2C2117;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 28px -12px rgba(0,0,0,0.55);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #171713;
+    --bg-grain: #1E1E19;
+    --surface: #211F1A;
+    --surface-raised: #29271F;
+    --ink: #EFEBE0;
+    --ink-soft: #A6A192;
+    --ink-faint: #6B6858;
+    --line: #383527;
+    --line-strong: #4A4633;
+    --accent: #E2643F;
+    --accent-ink: #1A1108;
+    --accent-wash-1: #4A2C1E;
+    --accent-wash-2: #3A2519;
+    --accent-wash-3: #2C2117;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 28px -12px rgba(0,0,0,0.55);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 1px 1px, var(--bg-grain) 1px, transparent 0);
+    background-size: 22px 22px;
+    color: var(--ink);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 40px 16px 64px;
+  }
+  .num { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+  .book {
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .masthead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 0 6px 14px;
+  }
+  .masthead .brand {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .masthead .brand b { color: var(--ink); font-weight: 700; }
+  .masthead .year { font-size: 12px; color: var(--ink-faint); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  nav.tabs {
+    display: flex;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-raised);
+  }
+  nav.tabs button {
+    flex: 1;
+    appearance: none;
+    background: none;
+    border: none;
+    font: inherit;
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    padding: 14px 8px 12px;
+    cursor: pointer;
+    position: relative;
+    letter-spacing: 0.02em;
+  }
+  nav.tabs button:hover { color: var(--ink); }
+  nav.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  nav.tabs button[aria-selected="true"] { color: var(--ink); }
+  nav.tabs button[aria-selected="true"]::after {
+    content: "";
+    position: absolute;
+    left: 14px; right: 14px; bottom: 0;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
+  }
+
+  .panel { padding: 28px 26px 26px; }
+  .panel[hidden] { display: none; }
+
+  /* ---- Today ---- */
+  .date-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 22px;
+  }
+  .date-row .date {
+    font-family: "Shippori Mincho", serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+  .date-row .weekday {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-left: 6px;
+  }
+  .streak-badge {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .streak-badge .n { font-size: 15px; color: var(--accent); font-weight: 700; }
+
+  .progress-block { margin-bottom: 26px; }
+  .progress-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .progress-top .pct { font-size: 30px; font-weight: 700; }
+  .progress-top .pct span { font-size: 15px; font-weight: 500; color: var(--ink-soft); margin-left: 2px; }
+  .progress-top .frac { font-size: 13px; color: var(--ink-soft); }
+  .progress-track {
+    height: 10px;
+    border-radius: 6px;
+    background: var(--accent-wash-3);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 6px 0 0 6px;
+    transition: width 0.35s ease;
+  }
+  .progress-fill.full { border-radius: 6px; }
+
+  ul.checklist { list-style: none; margin: 0; padding: 0; }
+  .task-row {
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    transition: transform 0.15s ease;
+  }
+  .task-row:last-child { border-bottom: none; }
+  .task-row.not-today .stamp { opacity: 0.35; }
+  .task-row.not-today .task-name { color: var(--ink-faint); }
+  .task-row.not-today .row-main { cursor: default; }
+  .task-row.dragging {
+    position: relative;
+    z-index: 5;
+    transition: none;
+    background: var(--surface-raised);
+    box-shadow: var(--shadow);
+    border-radius: 9px;
+    border-bottom-color: transparent;
+    cursor: grabbing;
+  }
+  .row-main {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 2px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .row-controls {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    opacity: 0.55;
+  }
+  .task-row:hover .row-controls,
+  .task-row:focus-within .row-controls { opacity: 1; }
+  .task-row.expanded .row-controls { opacity: 1; }
+  .row-btn {
+    appearance: none;
+    border: 1px solid transparent;
+    background: none;
+    color: var(--ink-faint);
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .row-btn:hover { color: var(--ink); background: var(--surface-raised); border-color: var(--line); }
+  .row-btn.danger:hover { color: var(--accent); background: var(--accent-wash-3); border-color: var(--accent-wash-1); }
+  .row-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .row-btn.days-btn.customized { color: var(--accent); }
+  .row-btn.days-btn[aria-expanded="true"] { color: var(--ink); background: var(--surface-raised); border-color: var(--line); }
+  .drag-handle {
+    touch-action: none;
+    cursor: grab;
+  }
+  .drag-handle:active { cursor: grabbing; }
+  .drag-handle svg { display: block; }
+
+  .task-name-wrap {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .task-days-note {
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-top: 1px;
+  }
+
+  .days-editor {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 2px 14px 62px;
+  }
+  .day-chip {
+    appearance: none;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+    background: var(--surface-raised);
+    color: var(--ink-soft);
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .day-chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 700;
+  }
+  .day-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .stamp {
+    flex: none;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line-strong);
+    display: flex; align-items: center; justify-content: center;
+    color: transparent;
+    font-family: "Shippori Mincho", serif;
+    font-size: 13px;
+    font-weight: 700;
+    transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  }
+  .task-row.done .stamp {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    transform: rotate(-8deg) scale(1.04);
+    box-shadow: 0 0 0 3px var(--accent-wash-2);
+  }
+  .task-name {
+    font-size: 15.5px;
+    line-height: 1.4;
+    color: var(--ink);
+    cursor: text;
+  }
+  .task-name:hover { text-decoration: underline dotted; text-underline-offset: 3px; }
+  .task-row.done .task-name { color: var(--ink-soft); }
+  .task-name-input {
+    display: block;
+    width: 100%;
+    font: inherit;
+    font-size: 16px;
+    color: var(--ink);
+    background: var(--surface-raised);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 3px 6px;
+    margin: -4px 0;
+  }
+  .task-name-input:focus-visible { outline: none; }
+
+  .hidden-section { border-top: 1px dashed var(--line); margin-top: 4px; padding-top: 4px; }
+  .hidden-toggle {
+    appearance: none;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    padding: 10px 2px;
+    cursor: pointer;
+  }
+  .hidden-toggle:hover { color: var(--ink); }
+  .hidden-toggle .chevron { transition: transform 0.15s ease; flex: none; }
+  .hidden-toggle[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+  .hidden-list .task-name, .hidden-list .task-days-note { color: var(--ink-faint); }
+  .hidden-list .row-main { cursor: default; }
+  .empty-state {
+    text-align: center;
+    padding: 30px 10px 10px;
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .empty-state a { color: var(--accent); font-weight: 500; cursor: pointer; }
+
+  .cheer {
+    margin-top: 18px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  /* ---- History ---- */
+  .weekday-labels {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 6px;
+  }
+  .weekday-labels span {
+    text-align: center;
+    font-size: 10px;
+    color: var(--ink-faint);
+  }
+  .heat-cell {
+    aspect-ratio: 1;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--surface-raised);
+    position: relative;
+    cursor: default;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px;
+  }
+  .heat-cell .cell-day {
+    position: absolute;
+    top: 3px;
+    left: 4px;
+    font-size: 9px;
+    opacity: 0.75;
+  }
+  .heat-cell .cell-pct { font-size: 14px; font-weight: 700; line-height: 1; }
+  .heat-cell .cell-pct-full {
+    font-family: "Shippori Mincho", serif;
+    font-size: 17px;
+    transform: rotate(-8deg);
+  }
+  .heat-cell[data-level="1"] { background: var(--accent-wash-3); border-color: var(--accent-wash-2); }
+  .heat-cell[data-level="2"] { background: var(--accent-wash-2); border-color: var(--accent-wash-1); }
+  .heat-cell[data-level="1"], .heat-cell[data-level="2"], .heat-cell[data-level="3"] { color: var(--ink); }
+  .heat-cell[data-level="3"] { background: var(--accent-wash-1); border-color: var(--accent); }
+  .heat-cell[data-level="4"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .heat-cell[data-future] { background: transparent; border-style: dashed; border-color: var(--line); opacity: 0.5; }
+  .heat-cell[data-today]::after {
+    content: "";
+    position: absolute; inset: -3px;
+    border: 1.5px solid var(--ink);
+    border-radius: 9px;
+    opacity: 0.55;
+  }
+  .heat-cell[data-clickable] { cursor: pointer; }
+  .heat-cell[data-clickable]:hover { border-color: var(--line-strong); }
+  .heat-cell[data-blank] { visibility: hidden; }
+  .heat-cell[data-selected] { box-shadow: 0 0 0 2px var(--ink); }
+
+  .heat-legend {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 18px;
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+  .heat-legend .heat-cell { width: 14px; height: 14px; aspect-ratio: auto; border-radius: 4px; cursor: default; }
+  .heat-legend .scale-label { color: var(--ink-faint); }
+
+  .day-detail {
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .detail-empty { font-size: 13px; color: var(--ink-soft); text-align: center; }
+  .detail-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .detail-date { font-size: 15px; font-weight: 700; font-family: "Shippori Mincho", serif; }
+  .detail-full {
+    font-size: 12.5px;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .detail-pct { font-size: 18px; font-weight: 700; color: var(--accent); }
+  ul.detail-list { list-style: none; margin: 0; padding: 0; }
+  .detail-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 0;
+    font-size: 13.5px;
+    border-top: 1px solid var(--line);
+  }
+  .detail-row:first-child { border-top: none; }
+  .detail-mark {
+    flex: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .detail-row.done .detail-mark { background: var(--accent); color: var(--accent-ink); }
+  .detail-row.done .detail-name { color: var(--ink); }
+  .detail-row.missed .detail-mark { border: 1.5px solid var(--line-strong); color: transparent; }
+  .detail-row.missed .detail-name { color: var(--ink-faint); }
+
+  .month-list { display: flex; flex-direction: column; gap: 22px; }
+  .month-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+    font-family: "Shippori Mincho", serif;
+  }
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+
+  .task-row:focus-visible, nav.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .add-row { display: flex; gap: 8px; margin-top: 16px; }
+  .add-row input {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    font-size: 16px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface-raised);
+    color: var(--ink);
+  }
+  .add-row input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .add-row button {
+    flex: none;
+    appearance: none;
+    border: none;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 0 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .add-row button:hover { filter: brightness(1.06); }
+  .add-row button:disabled { opacity: 0.4; cursor: default; }
+
+  footer.note {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin-top: 18px;
+    line-height: 1.7;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .progress-fill, .stamp { transition: none; }
+  }
+
+  @media (max-width: 400px) {
+    .panel { padding: 22px 16px 20px; }
+    .date-row .date { font-size: 24px; }
+  }
+</style>
+
+<div class="book">
+  <div class="masthead">
+    <div class="brand"><b>習慣スタンプ帳</b> — Habit Stamp Book</div>
+    <div class="year num" id="yearLabel">2026</div>
+  </div>
+
+  <div class="card">
+    <nav class="tabs" role="tablist">
+      <button role="tab" id="tab-today" aria-selected="true">今日</button>
+      <button role="tab" id="tab-history" aria-selected="false">履歴</button>
+    </nav>
+
+    <section class="panel" id="panel-today">
+      <div class="date-row">
+        <div><span class="date" id="dateLabel">9月6日</span><span class="weekday" id="weekdayLabel">日曜日</span></div>
+        <div class="streak-badge"><span class="num n" id="streakNum">0</span>日 継続中</div>
+      </div>
+
+      <div class="progress-block">
+        <div class="progress-top">
+          <div class="pct num"><span id="pctNum">0</span><span>%</span></div>
+          <div class="frac num" id="fracLabel">0 / 0</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      </div>
+
+      <ul class="checklist" id="checklist"></ul>
+      <div class="empty-state" id="emptyState" hidden></div>
+      <div class="cheer" id="cheerMsg" hidden>今日ぶんは全部スタンプ済み。お疲れさまでした。</div>
+
+      <div class="hidden-section" id="hiddenSection" hidden>
+        <button type="button" class="hidden-toggle" id="hiddenToggle" aria-expanded="false">
+          <svg class="chevron" viewBox="0 0 10 6" width="10" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="hiddenToggleLabel">今日は表示していないタスク</span>
+        </button>
+        <ul class="checklist hidden-list" id="hiddenChecklist" hidden></ul>
+      </div>
+
+      <div class="add-row">
+        <input type="text" id="newTaskInput" placeholder="例）ストレッチをする" maxlength="40" />
+        <button id="addTaskBtn">追加</button>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-history" hidden>
+      <div class="heat-legend">
+        <span>達成率</span>
+        <span class="scale-label num">0%</span>
+        <span class="heat-cell" data-level="0"></span>
+        <span class="heat-cell" data-level="1"></span>
+        <span class="heat-cell" data-level="2"></span>
+        <span class="heat-cell" data-level="3"></span>
+        <span class="heat-cell" data-level="4"></span>
+        <span class="scale-label num">100%</span>
+      </div>
+
+      <div class="day-detail" id="dayDetail">
+        <div class="detail-empty">日付をタップすると、その日の内訳が見られます。</div>
+      </div>
+
+      <div class="weekday-labels"><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span><span>日</span></div>
+      <div class="month-list" id="monthList"></div>
+    </section>
+  </div>
+
+  <footer class="note">データはこの端末のブラウザ内だけに保存されます。</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var STORAGE_KEY = "habitStampBook.v1";
+  var WEEKDAYS_JP = ["日", "月", "火", "水", "木", "金", "土"];
+  var DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+  function pad2(n) { return String(n).padStart(2, "0"); }
+  function toKey(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
+  function startOfDay(d) { var x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
+  function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  function uid() { return Math.random().toString(36).slice(2, 9); }
+
+  function allDays() { return [true, true, true, true, true, true, true]; }
+
+  function defaultState() {
+    var seed = ["布団を整える", "白湯を一杯飲む", "10分ストレッチ", "今日のToDoを3つ書き出す"];
+    return {
+      tasks: seed.map(function (name) { return { id: uid(), name: name, activeDays: allDays() }; }),
+      logs: {}
+    };
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      var parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.tasks) || typeof parsed.logs !== "object") return defaultState();
+      parsed.tasks.forEach(function (t) {
+        if (!Array.isArray(t.activeDays) || t.activeDays.length !== 7) t.activeDays = allDays();
+      });
+      return parsed;
+    } catch (e) {
+      return defaultState();
+    }
+  }
+
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  var state = loadState();
+
+  function isActiveOn(task, dow) { return !!task.activeDays[dow]; }
+
+  function ensureTodayLog() {
+    var today = new Date();
+    var dow = today.getDay();
+    var key = toKey(today);
+    var eligibleIds = state.tasks.filter(function (t) { return isActiveOn(t, dow); }).map(function (t) { return t.id; });
+    var eligibleSet = {};
+    eligibleIds.forEach(function (id) { eligibleSet[id] = true; });
+    var log = state.logs[key];
+    if (!log) {
+      log = { taskIds: eligibleIds.slice(), done: [] };
+      state.logs[key] = log;
+    } else {
+      eligibleIds.forEach(function (id) {
+        if (log.taskIds.indexOf(id) === -1) log.taskIds.push(id);
+      });
+      log.taskIds = log.taskIds.filter(function (id) { return eligibleSet[id]; });
+      log.done = log.done.filter(function (id) { return eligibleSet[id]; });
+    }
+    return log;
+  }
+
+  function taskById(id) {
+    return state.tasks.filter(function (t) { return t.id === id; })[0];
+  }
+  function taskDisplayName(id) {
+    var t = taskById(id);
+    return t ? t.name : "（削除済みのタスク）";
+  }
+
+  // ---------- Tabs ----------
+  var tabs = {
+    today: document.getElementById("tab-today"),
+    history: document.getElementById("tab-history")
+  };
+  var panels = {
+    today: document.getElementById("panel-today"),
+    history: document.getElementById("panel-history")
+  };
+  function selectTab(name) {
+    Object.keys(tabs).forEach(function (k) {
+      tabs[k].setAttribute("aria-selected", String(k === name));
+      panels[k].hidden = k !== name;
+    });
+    if (name === "history") renderHistory();
+  }
+  tabs.today.addEventListener("click", function () { selectTab("today"); });
+  tabs.history.addEventListener("click", function () { selectTab("history"); });
+
+  // ---------- Today ----------
+  // Reorders state.tasks so the dragged task lands in the position implied by
+  // newVisibleOrder (the ids currently shown in the checklist, reordered).
+  // Tasks hidden today (excluded by weekday settings) keep their relative spot
+  // untouched — only the dragged task moves, relative to its new visible neighbor.
+  function reorderTaskAmongVisible(draggedId, newVisibleOrder) {
+    var pos = newVisibleOrder.indexOf(draggedId);
+    var nextVisibleId = pos < newVisibleOrder.length - 1 ? newVisibleOrder[pos + 1] : null;
+    var remaining = state.tasks.filter(function (t) { return t.id !== draggedId; });
+    var draggedTask = taskById(draggedId);
+    if (!draggedTask) return;
+    var insertAt = remaining.length;
+    if (nextVisibleId) {
+      var nextPos = remaining.map(function (t) { return t.id; }).indexOf(nextVisibleId);
+      if (nextPos !== -1) insertAt = nextPos;
+    }
+    remaining.splice(insertAt, 0, draggedTask);
+    state.tasks = remaining;
+    saveState(); renderToday();
+  }
+  function removeTask(id) {
+    state.tasks = state.tasks.filter(function (t) { return t.id !== id; });
+    saveState(); renderToday();
+  }
+  function addTask(name) {
+    name = name.trim();
+    if (!name) return;
+    state.tasks.push({ id: uid(), name: name, activeDays: allDays() });
+    saveState(); renderToday();
+  }
+  function toggleTaskDay(task, dow) {
+    var activeCount = task.activeDays.filter(Boolean).length;
+    if (task.activeDays[dow] && activeCount <= 1) return;
+    task.activeDays[dow] = !task.activeDays[dow];
+    saveState(); renderToday();
+  }
+  function daysNote(task) {
+    if (task.activeDays.every(function (v) { return v; })) return "";
+    var picked = [];
+    DISPLAY_ORDER.forEach(function (dow) { if (task.activeDays[dow]) picked.push(WEEKDAYS_JP[dow]); });
+    return picked.join("・") + "のみ";
+  }
+  function renameTask(task, newName) {
+    newName = newName.trim();
+    if (newName) task.name = newName;
+    saveState();
+  }
+  var expandedTaskId = null;
+  var renamingTaskId = null;
+  var hiddenSectionOpen = false;
+
+  var DRAG_HANDLE_HTML =
+    '<button class="row-btn drag-handle" title="ドラッグで並び替え" aria-label="並び替え">' +
+    '<svg viewBox="0 0 12 20" width="10" height="16" fill="currentColor">' +
+    '<circle cx="3" cy="3" r="1.6"/><circle cx="9" cy="3" r="1.6"/>' +
+    '<circle cx="3" cy="10" r="1.6"/><circle cx="9" cy="10" r="1.6"/>' +
+    '<circle cx="3" cy="17" r="1.6"/><circle cx="9" cy="17" r="1.6"/>' +
+    '</svg></button>';
+  function daysBtnHtml(note, expanded) {
+    return '<button class="row-btn days-btn' + (note ? ' customized' : '') + '" title="表示する曜日" aria-expanded="' + expanded + '">' +
+      '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">' +
+      '<rect x="2" y="3.5" width="12" height="10.5" rx="1.8"/>' +
+      '<line x1="2" y1="6.7" x2="14" y2="6.7"/>' +
+      '<line x1="5.2" y1="1.6" x2="5.2" y2="4.4"/>' +
+      '<line x1="10.8" y1="1.6" x2="10.8" y2="4.4"/>' +
+      '</svg></button>';
+  }
+
+  // Builds one <li class="task-row"> for either the main checklist (showDrag/showStamp
+  // true, reflecting today's completion) or the hidden-tasks section (no stamp, no drag —
+  // just enough to reopen the days editor or delete the task).
+  function buildTaskRow(id, log, opts) {
+    var task = taskById(id);
+    var expanded = expandedTaskId === id;
+    var renaming = renamingTaskId === id;
+    var note = daysNote(task);
+    var done = log.done.indexOf(id) !== -1;
+    var scheduledToday = log.taskIds.indexOf(id) !== -1;
+
+    var li = document.createElement("li");
+    li.dataset.taskId = id;
+    li.className = "task-row" + (done ? " done" : "") + (expanded ? " expanded" : "") + (scheduledToday ? "" : " not-today");
+
+    var rowMain = document.createElement("div");
+    rowMain.className = "row-main";
+
+    if (opts.showStamp) {
+      var stamp = document.createElement("span");
+      stamp.className = "stamp";
+      stamp.textContent = "済";
+      rowMain.appendChild(stamp);
+    }
+
+    var nameWrap = document.createElement("span");
+    nameWrap.className = "task-name-wrap";
+    if (renaming) {
+      var input = document.createElement("input");
+      input.type = "text";
+      input.className = "task-name-input";
+      input.maxLength = 40;
+      input.value = task.name;
+      var committed = false;
+      function commitRename() {
+        if (committed) return;
+        committed = true;
+        renameTask(task, input.value);
+        renamingTaskId = null;
+        renderToday();
+      }
+      input.addEventListener("click", function (e) { e.stopPropagation(); });
+      input.addEventListener("keydown", function (e) {
+        e.stopPropagation();
+        if (e.key === "Enter") { commitRename(); }
+        else if (e.key === "Escape") { committed = true; renamingTaskId = null; renderToday(); }
+      });
+      input.addEventListener("blur", commitRename);
+      nameWrap.appendChild(input);
+    } else {
+      var nameSpan = document.createElement("span");
+      nameSpan.className = "task-name";
+      nameSpan.textContent = task.name;
+      nameSpan.title = "クリックして名前を編集";
+      nameSpan.addEventListener("click", function (e) {
+        e.stopPropagation();
+        renamingTaskId = id;
+        renderToday();
+      });
+      nameWrap.appendChild(nameSpan);
+      if (note) {
+        var noteSpan = document.createElement("span");
+        noteSpan.className = "task-days-note";
+        noteSpan.textContent = note;
+        nameWrap.appendChild(noteSpan);
+      }
+    }
+    rowMain.appendChild(nameWrap);
+
+    var controls = document.createElement("span");
+    controls.className = "row-controls";
+    if (opts.showDrag) controls.insertAdjacentHTML("beforeend", DRAG_HANDLE_HTML);
+    controls.insertAdjacentHTML("beforeend", daysBtnHtml(note, expanded));
+    controls.insertAdjacentHTML("beforeend", '<button class="row-btn danger del" title="削除">×</button>');
+    rowMain.appendChild(controls);
+
+    if (opts.showStamp && scheduledToday) {
+      function toggle() {
+        var i = log.done.indexOf(id);
+        if (i === -1) log.done.push(id); else log.done.splice(i, 1);
+        saveState();
+        renderToday();
+      }
+      rowMain.tabIndex = 0;
+      rowMain.setAttribute("role", "checkbox");
+      rowMain.setAttribute("aria-checked", String(done));
+      rowMain.addEventListener("click", toggle);
+      rowMain.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+      });
+    } else {
+      rowMain.setAttribute("aria-disabled", "true");
+    }
+
+    controls.querySelector(".del").addEventListener("click", function (e) { e.stopPropagation(); removeTask(id); });
+
+    var daysBtn = controls.querySelector(".days-btn");
+    daysBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      expandedTaskId = expanded ? null : id;
+      renderToday();
+    });
+
+    if (opts.showDrag) {
+      var handle = controls.querySelector(".drag-handle");
+      handle.addEventListener("click", function (e) { e.stopPropagation(); });
+      handle.addEventListener("pointerdown", function (e) { startDrag(e, li, opts.idx); });
+    }
+
+    li.appendChild(rowMain);
+
+    if (expanded && !renaming) {
+      var editor = document.createElement("div");
+      editor.className = "days-editor";
+      DISPLAY_ORDER.forEach(function (dow) {
+        var chip = document.createElement("button");
+        chip.className = "day-chip" + (task.activeDays[dow] ? " active" : "");
+        chip.type = "button";
+        chip.textContent = WEEKDAYS_JP[dow];
+        chip.addEventListener("click", function (e) {
+          e.stopPropagation();
+          toggleTaskDay(task, dow);
+        });
+        editor.appendChild(chip);
+      });
+      li.appendChild(editor);
+    }
+
+    return li;
+  }
+
+  function renderToday() {
+    var now = new Date();
+    document.getElementById("yearLabel").textContent = now.getFullYear();
+    document.getElementById("dateLabel").textContent = (now.getMonth() + 1) + "月" + now.getDate() + "日";
+    document.getElementById("weekdayLabel").textContent = WEEKDAYS_JP[now.getDay()] + "曜日";
+
+    var log = ensureTodayLog();
+    saveState();
+
+    var total = log.taskIds.length;
+    var doneCount = log.done.length;
+    var pct = total ? Math.round((doneCount / total) * 100) : 0;
+
+    document.getElementById("pctNum").textContent = pct;
+    document.getElementById("fracLabel").textContent = doneCount + " / " + total;
+    var fill = document.getElementById("progressFill");
+    fill.style.width = pct + "%";
+    fill.classList.toggle("full", pct >= 100);
+
+    document.getElementById("streakNum").textContent = computeCurrentStreak();
+
+    var list = document.getElementById("checklist");
+    list.innerHTML = "";
+    var orderedIds = state.tasks.map(function (t) { return t.id; }).filter(function (id) {
+      return log.taskIds.indexOf(id) !== -1 || id === expandedTaskId;
+    });
+
+    var emptyState = document.getElementById("emptyState");
+    emptyState.hidden = orderedIds.length !== 0;
+    if (orderedIds.length === 0) {
+      emptyState.textContent = state.tasks.length === 0
+        ? "まだルーティンがありません。下のフォームから今日やることを登録しましょう。"
+        : "今日は表示するタスクがありません（すべて曜日設定でオフになっています）。";
+    }
+    document.getElementById("cheerMsg").hidden = !(total > 0 && doneCount === total);
+
+    orderedIds.forEach(function (id, idx) {
+      list.appendChild(buildTaskRow(id, log, { showStamp: true, showDrag: true, idx: idx }));
+    });
+
+    // Tasks excluded today by weekday settings — kept reachable here so their
+    // schedule can still be edited (or the task deleted) without waiting for a day
+    // it's actually shown on.
+    var hiddenIds = state.tasks.map(function (t) { return t.id; }).filter(function (id) {
+      return orderedIds.indexOf(id) === -1;
+    });
+    var hiddenSection = document.getElementById("hiddenSection");
+    var hiddenList = document.getElementById("hiddenChecklist");
+    var hiddenToggle = document.getElementById("hiddenToggle");
+    if (hiddenIds.length === 0) {
+      hiddenSection.hidden = true;
+      hiddenList.innerHTML = "";
+    } else {
+      hiddenSection.hidden = false;
+      document.getElementById("hiddenToggleLabel").textContent = "今日は表示していないタスク（" + hiddenIds.length + "）";
+      hiddenToggle.setAttribute("aria-expanded", String(hiddenSectionOpen));
+      hiddenList.hidden = !hiddenSectionOpen;
+      hiddenList.innerHTML = "";
+      hiddenIds.forEach(function (id) {
+        hiddenList.appendChild(buildTaskRow(id, log, { showStamp: false, showDrag: false }));
+      });
+    }
+
+    var renamingInput = list.querySelector(".task-name-input") || hiddenList.querySelector(".task-name-input");
+    if (renamingInput) { renamingInput.focus(); renamingInput.select(); }
+  }
+
+  // ---------- Drag to reorder ----------
+  function startDrag(e, li, startIdx) {
+    e.preventDefault();
+    if (expandedTaskId !== null) {
+      var openRow = li.parentElement.querySelector(".task-row.expanded");
+      if (openRow) {
+        var openEditor = openRow.querySelector(".days-editor");
+        if (openEditor) openEditor.remove();
+        openRow.classList.remove("expanded");
+      }
+      expandedTaskId = null;
+    }
+    var list = li.parentElement;
+    var rows = Array.prototype.slice.call(list.children);
+    var rects = rows.map(function (row) { return row.getBoundingClientRect(); });
+    var centers = rects.map(function (r) { return r.top + r.height / 2; });
+    var draggedHeight = rects[startIdx].height;
+    var startY = e.clientY;
+    var currentIdx = startIdx;
+
+    // "others" holds every row except the dragged one, in their original visual order.
+    var others = [];
+    rows.forEach(function (row, i) { if (i !== startIdx) others.push({ row: row, center: centers[i] }); });
+
+    li.classList.add("dragging");
+
+    function onMove(ev) {
+      var deltaY = ev.clientY - startY;
+      li.style.transform = "translateY(" + deltaY + "px)";
+      var draggedCenterNow = centers[startIdx] + deltaY;
+
+      // Measuring against each row's actual original center (not a uniform row height)
+      // keeps this correct even when rows differ in height (e.g. a task with a days-note line).
+      var targetIdx = 0;
+      others.forEach(function (o) { if (o.center < draggedCenterNow) targetIdx++; });
+
+      if (targetIdx !== currentIdx) {
+        currentIdx = targetIdx;
+        others.forEach(function (o, pos) {
+          var wasBefore = pos < startIdx;
+          var shouldBeBefore = pos < currentIdx;
+          var shift = 0;
+          if (wasBefore && !shouldBeBefore) shift = 1;
+          else if (!wasBefore && shouldBeBefore) shift = -1;
+          o.row.style.transform = shift ? "translateY(" + shift * draggedHeight + "px)" : "";
+        });
+      }
+    }
+
+    function onUp() {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointercancel", onUp);
+      li.classList.remove("dragging");
+      li.style.transform = "";
+      others.forEach(function (o) { o.row.style.transform = ""; });
+
+      var visibleIds = rows.map(function (row) { return row.dataset.taskId; });
+      var draggedId = visibleIds.splice(startIdx, 1)[0];
+      visibleIds.splice(currentIdx, 0, draggedId);
+      reorderTaskAmongVisible(draggedId, visibleIds);
+    }
+
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onUp);
+  }
+
+  document.getElementById("hiddenToggle").addEventListener("click", function () {
+    hiddenSectionOpen = !hiddenSectionOpen;
+    renderToday();
+  });
+
+  // Mobile browsers auto-scroll the page to keep a focused input above the
+  // on-screen keyboard, but don't scroll back once the keyboard closes —
+  // leaving the layout looking shifted. Restore the pre-focus scroll position
+  // ourselves whenever any text input here loses focus.
+  var scrollBeforeKeyboard = null;
+  document.addEventListener("focusin", function (e) {
+    if (e.target.tagName === "INPUT") scrollBeforeKeyboard = window.scrollY;
+  });
+  document.addEventListener("focusout", function (e) {
+    if (e.target.tagName !== "INPUT" || scrollBeforeKeyboard === null) return;
+    var target = scrollBeforeKeyboard;
+    scrollBeforeKeyboard = null;
+    setTimeout(function () { window.scrollTo({ top: target, behavior: "auto" }); }, 100);
+  });
+
+  var newTaskInput = document.getElementById("newTaskInput");
+  var addTaskBtn = document.getElementById("addTaskBtn");
+  function submitNewTask() {
+    addTask(newTaskInput.value);
+    newTaskInput.value = "";
+    newTaskInput.blur();
+  }
+  addTaskBtn.addEventListener("click", submitNewTask);
+  newTaskInput.addEventListener("keydown", function (e) { if (e.key === "Enter") submitNewTask(); });
+
+  // ---------- Streak math ----------
+  function dayComplete(key) {
+    var log = state.logs[key];
+    return !!log && log.taskIds.length > 0 && log.done.length >= log.taskIds.length;
+  }
+
+  function computeCurrentStreak() {
+    var cursor = startOfDay(new Date());
+    if (!dayComplete(toKey(cursor))) cursor = addDays(cursor, -1);
+    var streak = 0;
+    while (dayComplete(toKey(cursor))) {
+      streak++;
+      cursor = addDays(cursor, -1);
+    }
+    return streak;
+  }
+
+  // ---------- History ----------
+  var selectedHistoryKey = null;
+  var selectedCellEl = null;
+
+  function earliestLogDate() {
+    var keys = Object.keys(state.logs);
+    if (keys.length === 0) return null;
+    keys.sort();
+    return new Date(keys[0] + "T00:00:00");
+  }
+
+  function achievementLevel(log) {
+    if (!log || log.taskIds.length === 0) return 0;
+    var pct = log.done.length / log.taskIds.length;
+    if (pct >= 1) return 4;
+    if (pct >= 0.67) return 3;
+    if (pct >= 0.34) return 2;
+    if (pct > 0) return 1;
+    return 0;
+  }
+
+  function renderDayDetail(key) {
+    var panel = document.getElementById("dayDetail");
+    var log = state.logs[key];
+    if (!log || log.taskIds.length === 0) {
+      panel.innerHTML = '<div class="detail-empty">この日の記録はありません。</div>';
+      return;
+    }
+    var d = new Date(key + "T00:00:00");
+    var pct = Math.round((log.done.length / log.taskIds.length) * 100);
+
+    panel.innerHTML = "";
+    var head = document.createElement("div");
+    head.className = "detail-head";
+    var dateSpan = document.createElement("span");
+    dateSpan.className = "detail-date";
+    dateSpan.textContent = (d.getMonth() + 1) + "月" + d.getDate() + "日（" + WEEKDAYS_JP[d.getDay()] + "）";
+    var pctSpan = document.createElement("span");
+    pctSpan.className = "detail-pct num";
+    pctSpan.textContent = pct + "%　" + log.done.length + "/" + log.taskIds.length;
+    head.appendChild(dateSpan);
+    head.appendChild(pctSpan);
+    panel.appendChild(head);
+
+    if (pct >= 100) {
+      var full = document.createElement("div");
+      full.className = "detail-full";
+      full.textContent = "この日は全部達成。お疲れさまでした。";
+      panel.appendChild(full);
+    }
+
+    var ul = document.createElement("ul");
+    ul.className = "detail-list";
+    // Missed tasks first (what needs attention), completed ones after.
+    var ids = log.taskIds.slice().sort(function (a, b) {
+      var aDone = log.done.indexOf(a) !== -1 ? 1 : 0;
+      var bDone = log.done.indexOf(b) !== -1 ? 1 : 0;
+      return aDone - bDone;
+    });
+    ids.forEach(function (id) {
+      var done = log.done.indexOf(id) !== -1;
+      var li = document.createElement("li");
+      li.className = "detail-row " + (done ? "done" : "missed");
+      var mark = document.createElement("span");
+      mark.className = "detail-mark";
+      mark.textContent = done ? "済" : "";
+      var name = document.createElement("span");
+      name.className = "detail-name";
+      name.textContent = taskDisplayName(id);
+      li.appendChild(mark);
+      li.appendChild(name);
+      ul.appendChild(li);
+    });
+    panel.appendChild(ul);
+  }
+
+  function selectHistoryDay(key, cellEl) {
+    if (selectedCellEl) selectedCellEl.removeAttribute("data-selected");
+    if (selectedHistoryKey === key) {
+      // Tapping the already-selected day again closes the detail view.
+      selectedCellEl = null;
+      selectedHistoryKey = null;
+      document.getElementById("dayDetail").innerHTML = '<div class="detail-empty">日付をタップすると、その日の内訳が見られます。</div>';
+      return;
+    }
+    cellEl.setAttribute("data-selected", "");
+    selectedCellEl = cellEl;
+    selectedHistoryKey = key;
+    renderDayDetail(key);
+    document.getElementById("dayDetail").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function buildMonthBlock(year, month, today) {
+    var block = document.createElement("div");
+    block.className = "month-block";
+    var title = document.createElement("div");
+    title.className = "month-title";
+    title.textContent = year + "年" + (month + 1) + "月";
+    block.appendChild(title);
+
+    var grid = document.createElement("div");
+    grid.className = "month-grid";
+
+    var firstOfMonth = new Date(year, month, 1);
+    var leadingBlanks = (firstOfMonth.getDay() + 6) % 7;
+    var totalDays = new Date(year, month + 1, 0).getDate();
+
+    for (var i = 0; i < leadingBlanks; i++) {
+      var blank = document.createElement("div");
+      blank.className = "heat-cell";
+      blank.setAttribute("data-blank", "");
+      grid.appendChild(blank);
+    }
+
+    for (var day = 1; day <= totalDays; day++) {
+      var d = new Date(year, month, day);
+      var key = toKey(d);
+      var cell = document.createElement("div");
+      cell.className = "heat-cell";
+      var dayNum = document.createElement("span");
+      dayNum.className = "cell-day";
+      dayNum.textContent = day;
+      cell.appendChild(dayNum);
+
+      if (d > today) {
+        cell.setAttribute("data-future", "");
+      } else {
+        var log = state.logs[key];
+        cell.setAttribute("data-level", String(achievementLevel(log)));
+        if (log && log.taskIds.length > 0) {
+          var pct = Math.round((log.done.length / log.taskIds.length) * 100);
+          var full = pct >= 100;
+          var pctSpan = document.createElement("span");
+          pctSpan.className = "cell-pct" + (full ? " cell-pct-full" : "");
+          pctSpan.textContent = full ? "済" : pct + "%";
+          cell.appendChild(pctSpan);
+          cell.setAttribute("data-clickable", "");
+          cell.addEventListener("click", function (clickedKey, el) {
+            return function () { selectHistoryDay(clickedKey, el); };
+          }(key, cell));
+        }
+      }
+      if (key === toKey(today)) cell.setAttribute("data-today", "");
+      if (key === selectedHistoryKey) { cell.setAttribute("data-selected", ""); selectedCellEl = cell; }
+      grid.appendChild(cell);
+    }
+
+    block.appendChild(grid);
+    return block;
+  }
+
+  function renderHistory() {
+    var today = startOfDay(new Date());
+    var monthList = document.getElementById("monthList");
+    monthList.innerHTML = "";
+    selectedCellEl = null;
+
+    var earliest = earliestLogDate();
+    var monthsToShow = earliest
+      ? (today.getFullYear() - earliest.getFullYear()) * 12 + (today.getMonth() - earliest.getMonth()) + 1
+      : 1;
+
+    for (var i = 0; i < monthsToShow; i++) {
+      var monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      monthList.appendChild(buildMonthBlock(monthDate.getFullYear(), monthDate.getMonth(), today));
+    }
+
+    if (selectedHistoryKey) {
+      renderDayDetail(selectedHistoryKey);
+    } else {
+      document.getElementById("dayDetail").innerHTML = '<div class="detail-empty">日付をタップすると、その日の内訳が見られます。</div>';
+    }
+  }
+
+  renderToday();
+})();
+</script>

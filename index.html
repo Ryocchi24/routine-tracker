@@ -468,6 +468,11 @@
     font-weight: 500;
     margin-bottom: 10px;
   }
+  .detail-hint {
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+  }
   .detail-pct { font-size: 18px; font-weight: 700; color: var(--accent); }
   ul.detail-list { list-style: none; margin: 0; padding: 0; }
   .detail-row {
@@ -491,6 +496,10 @@
   .detail-row.done .detail-name { color: var(--ink); }
   .detail-row.missed .detail-mark { border: 1.5px solid var(--line-strong); color: transparent; }
   .detail-row.missed .detail-name { color: var(--ink-faint); }
+  .detail-row.editable { cursor: pointer; }
+  .detail-row.editable:hover .detail-name { color: var(--ink); }
+  .detail-row.editable:hover .detail-mark { border-color: var(--accent); }
+  .detail-row.editable:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
   .month-list { display: flex; flex-direction: column; gap: 22px; }
   .month-title {
@@ -1165,6 +1174,33 @@
     return 0;
   }
 
+  function refreshHistoryCell(key) {
+    var cell = document.querySelector('.heat-cell[data-key="' + key + '"]');
+    if (!cell) return;
+    var log = state.logs[key];
+    cell.setAttribute("data-level", String(achievementLevel(log)));
+    var pctSpan = cell.querySelector(".cell-pct");
+    if (pctSpan && log && log.taskIds.length > 0) {
+      var pct = Math.round((log.done.length / log.taskIds.length) * 100);
+      var full = pct >= 100;
+      pctSpan.textContent = full ? "済" : pct + "%";
+      pctSpan.classList.toggle("cell-pct-full", full);
+    }
+  }
+
+  // Past days can be corrected here (forgot to stamp that day) — today is
+  // deliberately left read-only in this view; it's only ever edited from
+  // the 今日 tab, so there's a single source of truth for "right now."
+  function toggleHistoryTask(key, id) {
+    var log = state.logs[key];
+    if (!log) return;
+    var i = log.done.indexOf(id);
+    if (i === -1) log.done.push(id); else log.done.splice(i, 1);
+    saveState();
+    refreshHistoryCell(key);
+    renderDayDetail(key);
+  }
+
   function renderDayDetail(key) {
     var panel = document.getElementById("dayDetail");
     var log = state.logs[key];
@@ -1172,6 +1208,7 @@
       panel.innerHTML = '<div class="detail-empty">この日の記録はありません。</div>';
       return;
     }
+    var isToday = key === toKey(startOfDay(new Date()));
     var d = new Date(key + "T00:00:00");
     var pct = Math.round((log.done.length / log.taskIds.length) * 100);
 
@@ -1193,6 +1230,11 @@
       full.className = "detail-full";
       full.textContent = "この日は全部達成。お疲れさまでした。";
       panel.appendChild(full);
+    } else if (isToday) {
+      var hint = document.createElement("div");
+      hint.className = "detail-hint";
+      hint.textContent = "今日の分は「今日」タブから操作してください。";
+      panel.appendChild(hint);
     }
 
     var ul = document.createElement("ul");
@@ -1215,6 +1257,16 @@
       name.textContent = taskDisplayName(id);
       li.appendChild(mark);
       li.appendChild(name);
+      if (!isToday) {
+        li.classList.add("editable");
+        li.tabIndex = 0;
+        li.setAttribute("role", "checkbox");
+        li.setAttribute("aria-checked", String(done));
+        li.addEventListener("click", function () { toggleHistoryTask(key, id); });
+        li.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleHistoryTask(key, id); }
+        });
+      }
       ul.appendChild(li);
     });
     panel.appendChild(ul);
@@ -1263,6 +1315,7 @@
       var key = toKey(d);
       var cell = document.createElement("div");
       cell.className = "heat-cell";
+      cell.dataset.key = key;
       var dayNum = document.createElement("span");
       dayNum.className = "cell-day";
       dayNum.textContent = day;

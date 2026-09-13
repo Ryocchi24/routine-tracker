@@ -503,12 +503,23 @@
   .detail-row.editable:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
   .month-list { display: flex; flex-direction: column; gap: 22px; }
+  .month-title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
   .month-title {
     font-size: 13px;
     font-weight: 700;
     color: var(--ink);
-    margin-bottom: 8px;
     font-family: "Shippori Mincho", serif;
+  }
+  .month-stats {
+    font-size: 11px;
+    color: var(--ink-soft);
+    white-space: nowrap;
   }
   .month-grid {
     display: grid;
@@ -1289,13 +1300,46 @@
     document.getElementById("dayDetail").scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
+  // Summarizes a month up through today (a month in progress reads as a running
+  // total; once its last day has passed, the same numbers are simply final).
+  function computeMonthStats(year, month, today) {
+    var totalDays = new Date(year, month + 1, 0).getDate();
+    var lastDay = totalDays;
+    if (year === today.getFullYear() && month === today.getMonth()) lastDay = today.getDate();
+    else if (new Date(year, month, totalDays) > today) return null;
+
+    var trackedDays = 0, sumPct = 0, fullCount = 0;
+    for (var day = 1; day <= lastDay; day++) {
+      var log = state.logs[toKey(new Date(year, month, day))];
+      if (log && log.taskIds.length > 0) {
+        trackedDays++;
+        var pct = (log.done.length / log.taskIds.length) * 100;
+        sumPct += pct;
+        if (pct >= 100) fullCount++;
+      }
+    }
+    if (trackedDays === 0) return null;
+    return { avgPct: Math.round(sumPct / trackedDays), fullCount: fullCount, trackedDays: trackedDays };
+  }
+
   function buildMonthBlock(year, month, today) {
     var block = document.createElement("div");
     block.className = "month-block";
-    var title = document.createElement("div");
+    var titleRow = document.createElement("div");
+    titleRow.className = "month-title-row";
+    var title = document.createElement("span");
     title.className = "month-title";
     title.textContent = year + "年" + (month + 1) + "月";
-    block.appendChild(title);
+    titleRow.appendChild(title);
+
+    var stats = computeMonthStats(year, month, today);
+    if (stats) {
+      var statsSpan = document.createElement("span");
+      statsSpan.className = "month-stats num";
+      statsSpan.textContent = "平均" + stats.avgPct + "%・全部達成 " + stats.fullCount + "/" + stats.trackedDays + "日";
+      titleRow.appendChild(statsSpan);
+    }
+    block.appendChild(titleRow);
 
     var grid = document.createElement("div");
     grid.className = "month-grid";

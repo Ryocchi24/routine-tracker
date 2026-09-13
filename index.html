@@ -521,6 +521,16 @@
     color: var(--ink-soft);
     white-space: nowrap;
   }
+  .month-comment {
+    background: var(--accent-wash-3);
+    color: var(--accent);
+    font-family: "Shippori Mincho", serif;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
   .month-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -1322,6 +1332,14 @@
     return { avgPct: Math.round(sumPct / trackedDays), fullCount: fullCount, trackedDays: trackedDays };
   }
 
+  function monthComment(avgPct) {
+    if (avgPct >= 90) return "文句なしの1ヶ月！最高でした！";
+    if (avgPct >= 70) return "よく頑張りました！いい1ヶ月でしたね！";
+    if (avgPct >= 50) return "波はあったけど、ちゃんと前進した1ヶ月！";
+    if (avgPct >= 30) return "焦らずマイペースに、積み重ねられました！";
+    return "大丈夫、また来月からいきましょう！";
+  }
+
   function buildMonthBlock(year, month, today) {
     var block = document.createElement("div");
     block.className = "month-block";
@@ -1333,6 +1351,7 @@
     titleRow.appendChild(title);
 
     var stats = computeMonthStats(year, month, today);
+    var isPastMonth = !(year === today.getFullYear() && month === today.getMonth());
     if (stats) {
       var statsSpan = document.createElement("span");
       statsSpan.className = "month-stats num";
@@ -1340,6 +1359,13 @@
       titleRow.appendChild(statsSpan);
     }
     block.appendChild(titleRow);
+
+    if (stats && isPastMonth) {
+      var comment = document.createElement("div");
+      comment.className = "month-comment";
+      comment.textContent = monthComment(stats.avgPct);
+      block.appendChild(comment);
+    }
 
     var grid = document.createElement("div");
     grid.className = "month-grid";

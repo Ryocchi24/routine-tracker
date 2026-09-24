@@ -344,6 +344,45 @@
   }
   .task-name-input:focus-visible { outline: none; }
 
+  .memo-block { margin-top: 20px; }
+  .memo-label {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .memo-input {
+    display: block;
+    width: 100%;
+    min-height: 58px;
+    resize: vertical;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface-raised);
+    color: var(--ink);
+  }
+  .memo-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .detail-memo {
+    display: block;
+    width: 100%;
+    min-height: 50px;
+    resize: vertical;
+    font: inherit;
+    font-size: 13.5px;
+    line-height: 1.5;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    margin-top: 12px;
+  }
+  .detail-memo:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
   .hidden-section { border-top: 1px dashed var(--line); margin-top: 4px; padding-top: 4px; }
   .hidden-toggle {
     appearance: none;
@@ -702,6 +741,11 @@
       <div class="empty-state" id="emptyState" hidden></div>
       <div class="cheer" id="cheerMsg" hidden>今日分は全部スタンプ済み。お疲れさまでした。</div>
 
+      <div class="memo-block">
+        <label class="memo-label" for="todayMemo">今日のひとこと</label>
+        <textarea class="memo-input" id="todayMemo" placeholder="今日はどんな一日でしたか？" maxlength="200"></textarea>
+      </div>
+
       <div class="hidden-section" id="hiddenSection" hidden>
         <button type="button" class="hidden-toggle" id="hiddenToggle" aria-expanded="false">
           <svg class="chevron" viewBox="0 0 10 6" width="10" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -850,7 +894,7 @@
     state.tasks.forEach(function (t) { existingTaskIds[t.id] = true; });
     var log = state.logs[key];
     if (!log) {
-      log = { taskIds: eligibleIds.slice(), done: [], extra: [] };
+      log = { taskIds: eligibleIds.slice(), done: [], extra: [], memo: "" };
       state.logs[key] = log;
     } else {
       // `extra` holds task ids added just for today via "今日だけ追加" — kept
@@ -1175,6 +1219,12 @@
     }
     document.getElementById("cheerMsg").hidden = !(total > 0 && doneCount === total);
 
+    // Only sync the memo box from state when the user isn't actively typing in
+    // it — otherwise the frequent re-renders elsewhere in this function would
+    // reset the cursor / clobber an in-progress edit.
+    var memoInput = document.getElementById("todayMemo");
+    if (document.activeElement !== memoInput) memoInput.value = log.memo || "";
+
     orderedIds.forEach(function (id, idx) {
       list.appendChild(buildTaskRow(id, log, { showStamp: true, showDrag: true, idx: idx }));
     });
@@ -1304,6 +1354,12 @@
   }
   addTaskBtn.addEventListener("click", submitNewTask);
   newTaskInput.addEventListener("keydown", function (e) { if (e.key === "Enter") submitNewTask(); });
+
+  document.getElementById("todayMemo").addEventListener("blur", function () {
+    var log = ensureTodayLog();
+    log.memo = this.value;
+    saveState();
+  });
 
   // ---------- Streak math ----------
   function dayComplete(key) {
@@ -1515,6 +1571,18 @@
       ul.appendChild(li);
     });
     panel.appendChild(ul);
+
+    var memo = document.createElement("textarea");
+    memo.className = "detail-memo";
+    memo.placeholder = "この日のひとこと";
+    memo.maxLength = 200;
+    memo.value = log.memo || "";
+    memo.addEventListener("click", function (e) { e.stopPropagation(); });
+    memo.addEventListener("blur", function () {
+      log.memo = memo.value;
+      saveState();
+    });
+    panel.appendChild(memo);
   }
 
   function selectHistoryDay(key, cellEl) {

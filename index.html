@@ -408,13 +408,20 @@
 
   .task-stats-list { display: flex; flex-direction: column; }
   .task-stat-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
     padding: 11px 2px;
     border-bottom: 1px solid var(--line);
   }
   .task-stat-row:last-child { border-bottom: none; }
+  .task-stat-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .task-stat-tip {
+    margin-top: 6px;
+    font-size: 11.5px;
+    color: var(--accent);
+  }
   .task-stat-name {
     flex: 1;
     min-width: 0;
@@ -1290,6 +1297,24 @@
     return rows;
   }
 
+  // EXPERIMENTAL preview only (not yet wired to real logic decisions) — canned
+  // tips for a task that's slipping, picked by a stable hash of its id so the
+  // same task always shows the same tip instead of one that changes on every render.
+  // Kept deliberately content-agnostic (frequency/mindset only) — no wording that
+  // assumes the task has a time, a place, or steps to split, since a mismatched
+  // suggestion (e.g. "try splitting it up" on an already-tiny task) is worse than none.
+  var TASK_TIPS = [
+    "曜日を減らして、無理のない頻度から始めてみる？",
+    "完璧を求めず、できた日を数えることを大事にしてみる？",
+    "できなかった日があっても大丈夫。次の1回を大事に。",
+    "少しハードルを下げて、まずは再開してみる？"
+  ];
+  function tipFor(id) {
+    var hash = 0;
+    for (var i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+    return TASK_TIPS[hash % TASK_TIPS.length];
+  }
+
   function renderTaskStats() {
     var container = document.getElementById("taskStatsList");
     container.innerHTML = "";
@@ -1301,6 +1326,8 @@
     rows.forEach(function (r) {
       var row = document.createElement("div");
       row.className = "task-stat-row";
+      var main = document.createElement("div");
+      main.className = "task-stat-main";
       var name = document.createElement("span");
       name.className = "task-stat-name";
       name.textContent = r.name;
@@ -1313,9 +1340,16 @@
       var pct = document.createElement("span");
       pct.className = "task-stat-pct num";
       pct.textContent = r.pct + "%（" + r.done + "/" + r.scheduled + "）";
-      row.appendChild(name);
-      row.appendChild(track);
-      row.appendChild(pct);
+      main.appendChild(name);
+      main.appendChild(track);
+      main.appendChild(pct);
+      row.appendChild(main);
+      if (r.scheduled > 0 && r.pct < 50) {
+        var tip = document.createElement("div");
+        tip.className = "task-stat-tip";
+        tip.textContent = tipFor(r.id);
+        row.appendChild(tip);
+      }
       container.appendChild(row);
     });
   }

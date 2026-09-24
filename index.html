@@ -258,6 +258,8 @@
   .row-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .row-btn.days-btn.customized { color: var(--accent); }
   .row-btn.days-btn[aria-expanded="true"] { color: var(--ink); background: var(--surface-raised); border-color: var(--line); }
+  .row-btn.add-today.active { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+  .row-btn.add-today.active:hover { color: var(--accent-ink); background: var(--accent); }
   .drag-handle {
     touch-action: none;
     cursor: grab;
@@ -362,6 +364,11 @@
   .hidden-toggle[aria-expanded="true"] .chevron { transform: rotate(180deg); }
   .hidden-list .task-name, .hidden-list .task-days-note { color: var(--ink-faint); }
   .hidden-list .row-main { cursor: default; }
+  .hidden-hint {
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    padding: 0 2px 10px;
+  }
   .empty-state {
     text-align: center;
     padding: 30px 10px 10px;
@@ -700,6 +707,7 @@
           <svg class="chevron" viewBox="0 0 10 6" width="10" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span id="hiddenToggleLabel">今日は表示していないタスク</span>
         </button>
+        <div class="hidden-hint" id="hiddenHint" hidden>「＋」で曜日設定は変えずに今日だけ一覧に追加できます。もう一度押すと外れます。</div>
         <ul class="checklist hidden-list" id="hiddenChecklist" hidden></ul>
       </div>
 
@@ -866,14 +874,28 @@
     return log;
   }
 
-  // Adds a task to today's checklist just for today, without changing its
-  // permanent weekday schedule (e.g. a Saturday-only task you want to catch
-  // up on today instead). It naturally stops appearing once today ends.
-  function addTaskForToday(id) {
+  // Adds or removes a task from today's checklist just for today, without
+  // touching its permanent weekday schedule (e.g. a Saturday-only task you
+  // want to catch up on today instead). Toggle so a one-off add can always be
+  // undone — otherwise, once added, the task looks "scheduled today" and the
+  // button to add it would vanish with no way back.
+  function toggleTaskForToday(id) {
     var log = ensureTodayLog();
     if (!log.extra) log.extra = [];
-    if (log.extra.indexOf(id) === -1) log.extra.push(id);
-    if (log.taskIds.indexOf(id) === -1) log.taskIds.push(id);
+    var i = log.extra.indexOf(id);
+    if (i === -1) {
+      log.extra.push(id);
+      if (log.taskIds.indexOf(id) === -1) log.taskIds.push(id);
+    } else {
+      log.extra.splice(i, 1);
+      var task = taskById(id);
+      if (task && !isActiveOn(task, new Date().getDay())) {
+        var ti = log.taskIds.indexOf(id);
+        if (ti !== -1) log.taskIds.splice(ti, 1);
+        var di = log.done.indexOf(id);
+        if (di !== -1) log.done.splice(di, 1);
+      }
+    }
     saveState();
     renderToday();
   }
@@ -983,6 +1005,8 @@
     var note = daysNote(task);
     var done = log.done.indexOf(id) !== -1;
     var scheduledToday = log.taskIds.indexOf(id) !== -1;
+    var eligibleToday = isActiveOn(task, new Date().getDay());
+    var addedForToday = !!(log.extra && log.extra.indexOf(id) !== -1);
 
     var li = document.createElement("li");
     li.dataset.taskId = id;
@@ -1046,8 +1070,11 @@
     controls.className = "row-controls";
     if (opts.showDrag) controls.insertAdjacentHTML("beforeend", DRAG_HANDLE_HTML);
     controls.insertAdjacentHTML("beforeend", daysBtnHtml(note, expanded));
-    if (!scheduledToday) {
-      controls.insertAdjacentHTML("beforeend", '<button class="row-btn add-today" title="今日だけ追加" aria-label="今日だけ追加">＋</button>');
+    if (!eligibleToday) {
+      var addTitle = addedForToday ? "今日の一覧から外す" : "今日だけ追加（曜日設定は変えません）";
+      controls.insertAdjacentHTML("beforeend",
+        '<button class="row-btn add-today' + (addedForToday ? " active" : "") + '" title="' + addTitle + '" aria-label="' + addTitle + '">' +
+        (addedForToday ? "－" : "＋") + '</button>');
     }
     controls.insertAdjacentHTML("beforeend", '<button class="row-btn danger del" title="削除">×</button>');
     rowMain.appendChild(controls);
@@ -1074,7 +1101,7 @@
 
     var addTodayBtn = controls.querySelector(".add-today");
     if (addTodayBtn) {
-      addTodayBtn.addEventListener("click", function (e) { e.stopPropagation(); addTaskForToday(id); });
+      addTodayBtn.addEventListener("click", function (e) { e.stopPropagation(); toggleTaskForToday(id); });
     }
 
     var daysBtn = controls.querySelector(".days-btn");
@@ -1168,6 +1195,7 @@
       hiddenSection.hidden = false;
       document.getElementById("hiddenToggleLabel").textContent = "今日は表示していないタスク（" + hiddenIds.length + "）";
       hiddenToggle.setAttribute("aria-expanded", String(hiddenSectionOpen));
+      document.getElementById("hiddenHint").hidden = !hiddenSectionOpen;
       hiddenList.hidden = !hiddenSectionOpen;
       hiddenList.innerHTML = "";
       hiddenIds.forEach(function (id) {

@@ -741,11 +741,6 @@
       <div class="empty-state" id="emptyState" hidden></div>
       <div class="cheer" id="cheerMsg" hidden>今日分は全部スタンプ済み。お疲れさまでした。</div>
 
-      <div class="memo-block">
-        <label class="memo-label" for="todayMemo">今日のひとこと</label>
-        <textarea class="memo-input" id="todayMemo" placeholder="今日はどんな一日でしたか？" maxlength="200"></textarea>
-      </div>
-
       <div class="hidden-section" id="hiddenSection" hidden>
         <button type="button" class="hidden-toggle" id="hiddenToggle" aria-expanded="false">
           <svg class="chevron" viewBox="0 0 10 6" width="10" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -758,6 +753,11 @@
       <div class="add-row">
         <input type="text" id="newTaskInput" placeholder="例）ストレッチをする" maxlength="40" />
         <button id="addTaskBtn">追加</button>
+      </div>
+
+      <div class="memo-block">
+        <label class="memo-label" for="todayMemo">今日のひとこと</label>
+        <textarea class="memo-input" id="todayMemo" placeholder="今日はどんな一日でしたか？" maxlength="200"></textarea>
       </div>
     </section>
 

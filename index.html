@@ -381,6 +381,64 @@
   }
 
   /* ---- History ---- */
+  .history-view-toggle {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+  .hv-btn {
+    flex: 1;
+    appearance: none;
+    border: 1px solid var(--line);
+    background: var(--surface-raised);
+    color: var(--ink-soft);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .hv-btn:hover { border-color: var(--line-strong); color: var(--ink); }
+  .hv-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .hv-btn[aria-pressed="true"]:hover { color: var(--accent-ink); }
+  .hv-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .section-hint { font-size: 12px; color: var(--ink-soft); margin-bottom: 14px; }
+
+  .task-stats-list { display: flex; flex-direction: column; }
+  .task-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 2px;
+    border-bottom: 1px solid var(--line);
+  }
+  .task-stat-row:last-child { border-bottom: none; }
+  .task-stat-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .task-stat-bar-track {
+    flex: 1;
+    max-width: 110px;
+    height: 6px;
+    border-radius: 4px;
+    background: var(--accent-wash-3);
+    overflow: hidden;
+  }
+  .task-stat-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; }
+  .task-stat-pct {
+    flex: none;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+
   .weekday-labels {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -636,23 +694,35 @@
     </section>
 
     <section class="panel" id="panel-history" hidden>
-      <div class="heat-legend">
-        <span>達成率</span>
-        <span class="scale-label num">0%</span>
-        <span class="heat-cell" data-level="0"></span>
-        <span class="heat-cell" data-level="1"></span>
-        <span class="heat-cell" data-level="2"></span>
-        <span class="heat-cell" data-level="3"></span>
-        <span class="heat-cell" data-level="4"></span>
-        <span class="scale-label num">100%</span>
+      <div class="history-view-toggle" role="tablist" id="historyViewToggle">
+        <button type="button" class="hv-btn" data-view="calendar" aria-pressed="true">カレンダー</button>
+        <button type="button" class="hv-btn" data-view="tasks" aria-pressed="false">タスク別</button>
       </div>
 
-      <div class="day-detail" id="dayDetail">
-        <div class="detail-empty">日付をタップすると、その日の内訳が見られます。</div>
+      <div id="calendarView">
+        <div class="heat-legend">
+          <span>達成率</span>
+          <span class="scale-label num">0%</span>
+          <span class="heat-cell" data-level="0"></span>
+          <span class="heat-cell" data-level="1"></span>
+          <span class="heat-cell" data-level="2"></span>
+          <span class="heat-cell" data-level="3"></span>
+          <span class="heat-cell" data-level="4"></span>
+          <span class="scale-label num">100%</span>
+        </div>
+
+        <div class="day-detail" id="dayDetail">
+          <div class="detail-empty">日付をタップすると、その日の内訳が見られます。</div>
+        </div>
+
+        <div class="weekday-labels"><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span><span>日</span></div>
+        <div class="month-list" id="monthList"></div>
       </div>
 
-      <div class="weekday-labels"><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span><span>日</span></div>
-      <div class="month-list" id="monthList"></div>
+      <div id="tasksView" hidden>
+        <div class="section-hint">達成率が低い順に並んでいます。サボりがちな習慣が一目でわかります。</div>
+        <div class="task-stats-list" id="taskStatsList"></div>
+      </div>
     </section>
   </div>
 
@@ -1178,6 +1248,77 @@
   // ---------- History ----------
   var selectedHistoryKey = null;
   var selectedCellEl = null;
+  var historyView = "calendar";
+
+  document.getElementById("historyViewToggle").addEventListener("click", function (e) {
+    var btn = e.target.closest(".hv-btn");
+    if (!btn) return;
+    historyView = btn.dataset.view;
+    document.querySelectorAll(".hv-btn").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b === btn));
+    });
+    document.getElementById("calendarView").hidden = historyView !== "calendar";
+    document.getElementById("tasksView").hidden = historyView !== "tasks";
+    if (historyView === "tasks") renderTaskStats();
+  });
+
+  // Aggregates every logged day across the task's whole history (by id, so a
+  // renamed task keeps one continuous record; a deleted task's past days still
+  // count, just under the generic deleted-task label).
+  function computeTaskStats() {
+    var agg = {};
+    Object.keys(state.logs).forEach(function (key) {
+      var log = state.logs[key];
+      log.taskIds.forEach(function (id) {
+        if (!agg[id]) agg[id] = { scheduled: 0, done: 0 };
+        agg[id].scheduled++;
+        if (log.done.indexOf(id) !== -1) agg[id].done++;
+      });
+    });
+    var rows = Object.keys(agg).map(function (id) {
+      var a = agg[id];
+      return {
+        id: id,
+        name: taskDisplayName(id),
+        scheduled: a.scheduled,
+        done: a.done,
+        pct: a.scheduled ? Math.round((a.done / a.scheduled) * 100) : 0
+      };
+    });
+    // Worst first — the habits that need attention should surface immediately.
+    rows.sort(function (a, b) { return a.pct - b.pct; });
+    return rows;
+  }
+
+  function renderTaskStats() {
+    var container = document.getElementById("taskStatsList");
+    container.innerHTML = "";
+    var rows = computeTaskStats();
+    if (rows.length === 0) {
+      container.innerHTML = '<div class="detail-empty">記録がまだありません。</div>';
+      return;
+    }
+    rows.forEach(function (r) {
+      var row = document.createElement("div");
+      row.className = "task-stat-row";
+      var name = document.createElement("span");
+      name.className = "task-stat-name";
+      name.textContent = r.name;
+      var track = document.createElement("span");
+      track.className = "task-stat-bar-track";
+      var fill = document.createElement("span");
+      fill.className = "task-stat-bar-fill";
+      fill.style.width = r.pct + "%";
+      track.appendChild(fill);
+      var pct = document.createElement("span");
+      pct.className = "task-stat-pct num";
+      pct.textContent = r.pct + "%（" + r.done + "/" + r.scheduled + "）";
+      row.appendChild(name);
+      row.appendChild(track);
+      row.appendChild(pct);
+      container.appendChild(row);
+    });
+  }
 
   function earliestLogDate() {
     var keys = Object.keys(state.logs);
@@ -1440,6 +1581,8 @@
     } else {
       document.getElementById("dayDetail").innerHTML = '<div class="detail-empty">日付をタップすると、その日の内訳が見られます。</div>';
     }
+
+    renderTaskStats();
   }
 
   renderToday();

@@ -405,6 +405,15 @@
   .hv-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
   .section-hint { font-size: 12px; color: var(--ink-soft); margin-bottom: 14px; }
+  .section-tip {
+    background: var(--accent-wash-3);
+    color: var(--accent);
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin: -6px 0 14px;
+  }
 
   .task-stats-list { display: flex; flex-direction: column; }
   .task-stat-row {
@@ -728,6 +737,7 @@
 
       <div id="tasksView" hidden>
         <div class="section-hint">達成率が低い順に並んでいます。サボりがちな習慣が一目でわかります。</div>
+        <div class="section-tip" id="taskSectionTip" hidden>50%を下回っているタスクがあります。曜日を減らすなど、無理のないペースに見直してみるのもおすすめです。</div>
         <div class="task-stats-list" id="taskStatsList"></div>
       </div>
     </section>
@@ -828,20 +838,44 @@
     var dow = today.getDay();
     var key = toKey(today);
     var eligibleIds = state.tasks.filter(function (t) { return isActiveOn(t, dow); }).map(function (t) { return t.id; });
-    var eligibleSet = {};
-    eligibleIds.forEach(function (id) { eligibleSet[id] = true; });
+    var existingTaskIds = {};
+    state.tasks.forEach(function (t) { existingTaskIds[t.id] = true; });
     var log = state.logs[key];
     if (!log) {
-      log = { taskIds: eligibleIds.slice(), done: [] };
+      log = { taskIds: eligibleIds.slice(), done: [], extra: [] };
       state.logs[key] = log;
     } else {
+      // `extra` holds task ids added just for today via "今日だけ追加" — kept
+      // alongside the weekday-eligible ones so a one-off addition survives the
+      // re-sync below (which would otherwise strip anything not on today's
+      // regular schedule) without ever touching the task's own activeDays.
+      if (!log.extra) log.extra = [];
+      log.extra = log.extra.filter(function (id) { return existingTaskIds[id]; });
+      var keepSet = {};
+      eligibleIds.forEach(function (id) { keepSet[id] = true; });
+      log.extra.forEach(function (id) { keepSet[id] = true; });
       eligibleIds.forEach(function (id) {
         if (log.taskIds.indexOf(id) === -1) log.taskIds.push(id);
       });
-      log.taskIds = log.taskIds.filter(function (id) { return eligibleSet[id]; });
-      log.done = log.done.filter(function (id) { return eligibleSet[id]; });
+      log.extra.forEach(function (id) {
+        if (log.taskIds.indexOf(id) === -1) log.taskIds.push(id);
+      });
+      log.taskIds = log.taskIds.filter(function (id) { return keepSet[id]; });
+      log.done = log.done.filter(function (id) { return keepSet[id]; });
     }
     return log;
+  }
+
+  // Adds a task to today's checklist just for today, without changing its
+  // permanent weekday schedule (e.g. a Saturday-only task you want to catch
+  // up on today instead). It naturally stops appearing once today ends.
+  function addTaskForToday(id) {
+    var log = ensureTodayLog();
+    if (!log.extra) log.extra = [];
+    if (log.extra.indexOf(id) === -1) log.extra.push(id);
+    if (log.taskIds.indexOf(id) === -1) log.taskIds.push(id);
+    saveState();
+    renderToday();
   }
 
   function taskById(id) {
@@ -1012,6 +1046,9 @@
     controls.className = "row-controls";
     if (opts.showDrag) controls.insertAdjacentHTML("beforeend", DRAG_HANDLE_HTML);
     controls.insertAdjacentHTML("beforeend", daysBtnHtml(note, expanded));
+    if (!scheduledToday) {
+      controls.insertAdjacentHTML("beforeend", '<button class="row-btn add-today" title="今日だけ追加" aria-label="今日だけ追加">＋</button>');
+    }
     controls.insertAdjacentHTML("beforeend", '<button class="row-btn danger del" title="削除">×</button>');
     rowMain.appendChild(controls);
 
@@ -1034,6 +1071,11 @@
     }
 
     controls.querySelector(".del").addEventListener("click", function (e) { e.stopPropagation(); removeTask(id); });
+
+    var addTodayBtn = controls.querySelector(".add-today");
+    if (addTodayBtn) {
+      addTodayBtn.addEventListener("click", function (e) { e.stopPropagation(); addTaskForToday(id); });
+    }
 
     var daysBtn = controls.querySelector(".days-btn");
     daysBtn.addEventListener("click", function (e) {
@@ -1297,28 +1339,12 @@
     return rows;
   }
 
-  // EXPERIMENTAL preview only (not yet wired to real logic decisions) — canned
-  // tips for a task that's slipping, picked by a stable hash of its id so the
-  // same task always shows the same tip instead of one that changes on every render.
-  // Kept deliberately content-agnostic (frequency/mindset only) — no wording that
-  // assumes the task has a time, a place, or steps to split, since a mismatched
-  // suggestion (e.g. "try splitting it up" on an already-tiny task) is worse than none.
-  var TASK_TIPS = [
-    "曜日を減らして、無理のない頻度から始めてみる？",
-    "完璧を求めず、できた日を数えることを大事にしてみる？",
-    "できなかった日があっても大丈夫。次の1回を大事に。",
-    "少しハードルを下げて、まずは再開してみる？"
-  ];
-  function tipFor(id) {
-    var hash = 0;
-    for (var i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-    return TASK_TIPS[hash % TASK_TIPS.length];
-  }
-
   function renderTaskStats() {
     var container = document.getElementById("taskStatsList");
     container.innerHTML = "";
     var rows = computeTaskStats();
+    var hasLowTask = rows.some(function (r) { return r.scheduled > 0 && r.pct < 50; });
+    document.getElementById("taskSectionTip").hidden = !hasLowTask;
     if (rows.length === 0) {
       container.innerHTML = '<div class="detail-empty">記録がまだありません。</div>';
       return;
@@ -1344,12 +1370,6 @@
       main.appendChild(track);
       main.appendChild(pct);
       row.appendChild(main);
-      if (r.scheduled > 0 && r.pct < 50) {
-        var tip = document.createElement("div");
-        tip.className = "task-stat-tip";
-        tip.textContent = tipFor(r.id);
-        row.appendChild(tip);
-      }
       container.appendChild(row);
     });
   }

@@ -1390,13 +1390,16 @@
   });
 
   // Aggregates every logged day across the task's whole history (by id, so a
-  // renamed task keeps one continuous record; a deleted task's past days still
-  // count, just under the generic deleted-task label).
+  // renamed task keeps one continuous record). Deleted tasks are left out: this
+  // list is about habits you still have, and a nameless "(削除済みのタスク)" row
+  // isn't something you can act on. Their days still appear in the per-day
+  // breakdown and calendar percentages.
   function computeTaskStats() {
     var agg = {};
     Object.keys(state.logs).forEach(function (key) {
       var log = state.logs[key];
       log.taskIds.forEach(function (id) {
+        if (!taskById(id)) return;
         if (!agg[id]) agg[id] = { scheduled: 0, done: 0 };
         agg[id].scheduled++;
         if (log.done.indexOf(id) !== -1) agg[id].done++;
